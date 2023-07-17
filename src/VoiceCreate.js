@@ -9,7 +9,7 @@ import { useParams } from 'react-router-dom';
 import Button from '@mui/material/Button';
 import Modal from '@mui/material/Modal';
 import TextField from '@mui/material/TextField';
-import { handleUpload, handleUploadAnswers, retrivePromptMessage, updateEmailId } from "./Common";
+import { checkTheStatus, handleUpload, handleUploadAnswers, retrivePromptMessage, updateEmailId } from "./Common";
 import { Alert, Box, Typography } from "@mui/material";
 import QuestionCard from "./components/QuestionCard";
 
@@ -189,6 +189,11 @@ const VoiceCreate = (props) => {
        temp.push(ms);
        setData(temp);
        setQuestion(res?.data.choices[0]?.message?.content);
+       checkTheStatus(ms.content).then((res)=>{
+          console.log('resss',res);
+       }).catch((err)=> {
+        console.log('errr',err);
+       })
        setTimeout(()=>{
         setLoading(false)
       },1000);
