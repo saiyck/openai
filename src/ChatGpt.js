@@ -34,13 +34,11 @@ const Mp3Recorder = new MicRecorder({ bitRate: 128 });
 const ChatDialog = (props) => {
   const chatContainerRef = useRef(null);
   const inputRef = useRef(null);
-  const [isLoading,setIsLoading] = useState(false);
-  const [hashedApiKey, setHashedApiKey] = useState("");
   const [text, setText] = useState("");
   const [showContent, setShowContent] = useState(false);
   const [isBlocked, setIsBlocked] = useState(false);
   const styles = useStyles();
-  const [promptInfo,setPromptInfo] = useState("");
+  const [promptInfo,setPromptInfo] = useState("imagine you're a nurse at a hospital. you are responsible to screen the initial symptoms, suggest him the right specialist (gynac, pediatrics, dentist, oncologist, dermatologist, etc). ask one question at a time. based on the user response, ask a follow-up question. at the end summarise your observations");
   const [messages,setMessages] = useState([]);
   const [loading, setLoading] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
@@ -48,8 +46,7 @@ const ChatDialog = (props) => {
   const [errorPrompt,setErrorPrompt] = useState("");
   const params = useParams();
   const id = params.id;
-
-
+  const [windowSize, setWindowSize] = useState(getWindowSize());
   // useEffect(()=>{
   //  retrivePromptMessage(id).then((res)=>{
   //   setPromptInfo(res.promptMessage)
@@ -58,6 +55,23 @@ const ChatDialog = (props) => {
   //   console.log('error',err)
   //  })
   // },[])
+
+  function getWindowSize() {
+    const {innerWidth, innerHeight} = window;
+    return {innerWidth, innerHeight};
+  }
+
+  useEffect(() => {
+    function handleWindowResize() {
+      setWindowSize(getWindowSize());
+    }
+
+    window.addEventListener('resize', handleWindowResize);
+
+    return () => {
+      window.removeEventListener('resize', handleWindowResize);
+    };
+  }, []);
 
   useEffect(() => {
     checkPermissions()
@@ -170,7 +184,7 @@ const ChatDialog = (props) => {
     return (
       <div style={{ padding: "1rem" }}>
 
-          <div style={{ position: "relative", width: "100%",display:'flex', alignItems:'center' }}>
+          <div style={{ position: "relative",display:'flex', alignItems:'center' }}>
             <ChatInput
               rowsMin={1}
               rowsMax={4}
@@ -442,13 +456,19 @@ const ChatDialog = (props) => {
               >
                 <div>
                 <InputBase
-                sx={{ mt: 1, width: '40vh',border: "1px solid gray", padding:'10px', borderRadius:'10px' }}
-                placeholder="Add prompt Message here"
+                 sx={{ mt: 1,
+                  border: "1px solid gray", 
+                  padding:'10px', 
+                  borderRadius:'10px',
+                  width: windowSize.innerWidth > 780 ? '30vw' : '70vw'
+                }}
+                 placeholder="Add prompt Message here"
                  multiline
                  maxRows={4}
                  value={promptInfo}
                  inputProps={{ 'aria-label': 'add prompt info' }}
                  onChange={handlePromptChange}
+                 fullWidth
                  />
                 <p style={{color:'red',fontSize:12}}>{errorPrompt}</p>
                 </div>
@@ -511,9 +531,10 @@ const ChatDialog = (props) => {
       anchor={"right"}
       PaperProps={{
         style: {
-          width: 440,
+          width: windowSize.innerWidth > 780 ? '40%' : '100%',
         },
       }}
+      containerClassName="drawer"
       open={true}
       onClose={()=>{}}
     >
@@ -638,7 +659,12 @@ const ChatInput = styled(TextareaAutosize)`
     border-radius: 12px;
     border: 1px solid lightgray;
     outline: none;
-    resize: none;
+
+    @media (max-width: 800px) {
+      && {
+        margin: 10px 0;
+      }
+    }
 
     &::-webkit-scrollbar {
       width: 4px;
