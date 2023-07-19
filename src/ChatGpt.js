@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef} from "react";
+import React, { useState, useEffect, useRef } from "react";
 import styled, { keyframes } from "styled-components";
 import { makeStyles } from "@material-ui/core";
 import Collapse from "@material-ui/core/Collapse";
@@ -19,7 +19,9 @@ import CreateOutlinedIcon from "@material-ui/icons/CreateOutlined";
 import CloseOutlinedIcon from "@material-ui/icons/CloseOutlined";
 import DeleteOutlineIcon from "@material-ui/icons/DeleteOutline";
 import InputBase from '@mui/material/InputBase';
-import {handleUpload, handleUploadAnswers} from "./Common";
+import { handleUpload, handleUploadAnswers } from "./Common";
+import mic from '../src/assets/mic.json';
+import Lottie from "react-lottie";
 
 const useStyles = makeStyles({
   paper: {
@@ -38,12 +40,12 @@ const ChatDialog = (props) => {
   const [showContent, setShowContent] = useState(false);
   const [isBlocked, setIsBlocked] = useState(false);
   const styles = useStyles();
-  const [promptInfo,setPromptInfo] = useState("imagine you're a nurse at a hospital. you are responsible to screen the initial symptoms, suggest him the right specialist (gynac, pediatrics, dentist, oncologist, dermatologist, etc). ask one question at a time. based on the user response, ask a follow-up question. at the end summarise your observations");
-  const [messages,setMessages] = useState([]);
+  const [promptInfo, setPromptInfo] = useState("imagine you're a nurse at a hospital. you are responsible to screen the initial symptoms, suggest him the right specialist (gynac, pediatrics, dentist, oncologist, dermatologist, etc). ask one question at a time. based on the user response, ask a follow-up question. at the end summarise your observations");
+  const [messages, setMessages] = useState([]);
   const [loading, setLoading] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
   const [isEditingSettings, setIsEditingSettings] = useState(false);
-  const [errorPrompt,setErrorPrompt] = useState("");
+  const [errorPrompt, setErrorPrompt] = useState("");
   const params = useParams();
   const id = params.id;
   const [windowSize, setWindowSize] = useState(getWindowSize());
@@ -56,9 +58,18 @@ const ChatDialog = (props) => {
   //  })
   // },[])
 
+  const defaultOptions = {
+    loop: true,
+    autoplay: true,
+    animationData: mic,
+    rendererSettings: {
+      preserveAspectRatio: "xMidYMid slice"
+    }
+  };
+
   function getWindowSize() {
-    const {innerWidth, innerHeight} = window;
-    return {innerWidth, innerHeight};
+    const { innerWidth, innerHeight } = window;
+    return { innerWidth, innerHeight };
   }
 
   useEffect(() => {
@@ -92,7 +103,7 @@ const ChatDialog = (props) => {
   }
 
   const handleTextChange = (e) => {
-   setText(e.target.value)
+    setText(e.target.value)
   }
 
   const handlePromptChange = (e) => {
@@ -100,10 +111,10 @@ const ChatDialog = (props) => {
   }
 
   const handleSubmitEditing = () => {
-    if(promptInfo.length > 50){
+    if (promptInfo.length > 50) {
       setIsEditingSettings(false)
       setErrorPrompt("")
-    }else{
+    } else {
       setErrorPrompt("Please enter proper prompt info")
     }
   }
@@ -113,8 +124,8 @@ const ChatDialog = (props) => {
   }
 
   const handleDeletePrompt = () => {
-     setPromptInfo("");
-     setIsEditingSettings(false)
+    setPromptInfo("");
+    setIsEditingSettings(false)
   }
 
   const handleSend = () => {
@@ -123,19 +134,19 @@ const ChatDialog = (props) => {
     let temp = [...messages];
     temp.push(m);
     setMessages(temp);
-    handleUploadAnswers(temp, promptInfo, id).then((res)=>{
-      let ms = { role: "assistant", content: res.data.choices[0].message.content}
+    handleUploadAnswers(temp, promptInfo, id).then((res) => {
+      let ms = { role: "assistant", content: res.data.choices[0].message.content }
       temp.push(ms)
       setMessages(temp);
       setText("")
       setIsRecording(false)
       setLoading(false)
-    }).catch((err)=>{
+    }).catch((err) => {
       console.log('Error:', err)
     })
   }
 
- 
+
   const start = () => {
     if (promptInfo == '') {
       window.alert("please add promptInfo")
@@ -156,27 +167,27 @@ const ChatDialog = (props) => {
 
   const stop = () => {
     setLoading(true)
-      Mp3Recorder
-        .stop()
-        .getMp3()
-        .then(([buffer, blob]) => {
-          const wavefile = new File([blob], 'inhand.wav');
-          setLoading(true)
-          handleUpload(wavefile).then((res) => {
-            console.log('ress>>>',res)
-            let m = { role: "user", content: res.data.text }
-            let temp = [...messages];
-            temp.push(m);
+    Mp3Recorder
+      .stop()
+      .getMp3()
+      .then(([buffer, blob]) => {
+        const wavefile = new File([blob], 'inhand.wav');
+        setLoading(true)
+        handleUpload(wavefile).then((res) => {
+          console.log('ress>>>', res)
+          let m = { role: "user", content: res.data.text }
+          let temp = [...messages];
+          temp.push(m);
+          setMessages(temp);
+          handleUploadAnswers(temp, promptInfo, id).then((res) => {
+            let ms = { role: "assistant", content: res.data.choices[0].message.content }
+            temp.push(ms)
             setMessages(temp);
-            handleUploadAnswers(temp, promptInfo, id).then((res)=>{
-              let ms = { role: "assistant", content: res.data.choices[0].message.content }
-              temp.push(ms)
-              setMessages(temp);
-              setIsRecording(false)
-              setLoading(false)
-            })
-          }).catch((e) => console.log(e));
-        })
+            setIsRecording(false)
+            setLoading(false)
+          })
+        }).catch((e) => console.log(e));
+      })
   };
 
 
@@ -184,60 +195,61 @@ const ChatDialog = (props) => {
     return (
       <div style={{ padding: "1rem" }}>
 
-          <div style={{ position: "relative",display:'flex', alignItems:'center' }}>
-            <ChatInput
-              rowsMin={1}
-              rowsMax={4}
-              autoFocus
-              ref={inputRef}
-              placeholder="e.g. Tap to speak or write message"
-              value={text}
-              disabled={loading || isRecording}
-              onChange={handleTextChange}
-            />
-         
-              <ActionContainer style={{}}>
-              {
-                loading ? 
+        <div style={{ position: "relative", display: 'flex', alignItems: 'center' }}>
+          <ChatInput
+            rowsMin={1}
+            rowsMax={4}
+            autoFocus
+            ref={inputRef}
+            placeholder="e.g. Tap to speak or write message"
+            value={text}
+            disabled={loading || isRecording}
+            onChange={handleTextChange}
+          />
+
+          <ActionContainer style={{}}>
+            {
+              loading ?
                 <LoadingDots />
-              :  
-              text.length > 0 ?    
-              <StyledIconButton
-                type="submit"
-                color="primary"
-                onClick={handleSend}
-              >
-                  <SendOutlinedIcon
-                    style={{
-                      color: "rgb(35, 127, 244)",
-                    }}
-                    fontSize="medium"
-                  />
-              </StyledIconButton> :
-              isRecording ?
-             <StyledIconButton
-               type="submit"
-               color="primary"
-               onClick={stop}
-             >
-                <StopCircle
-                  style={{color: "rgb(255, 0, 0)"}}
-                  fontSize="medium"
-                />
-             </StyledIconButton> :
-              <StyledIconButton
-              type="submit"
-              color="primary"
-              onClick={start}
-            >
-                <MicIcon
-                  style={{color: "rgb(35, 127, 244)"}}
-                  fontSize="medium"
-                />
-            </StyledIconButton>
-            } 
-           </ActionContainer>
-          </div>
+                :
+                text.length > 0 ?
+                  <StyledIconButton
+                    type="submit"
+                    color="primary"
+                    onClick={handleSend}
+                  >
+                    <SendOutlinedIcon
+                      style={{
+                        color: "rgb(35, 127, 244)",
+                      }}
+                      fontSize="medium"
+                    />
+                  </StyledIconButton> :
+                  isRecording ?
+                    <StyledIconButton
+                      type="submit"
+                      color="primary"
+                      onClick={stop}
+                    >
+                      <Lottie options={defaultOptions} height={22} width={22} />
+                      {/* <StopCircle
+                        style={{ color: "rgb(255, 0, 0)" }}
+                        fontSize="medium"
+                      /> */}
+                    </StyledIconButton> :
+                    <StyledIconButton
+                      type="submit"
+                      color="primary"
+                      onClick={start}
+                    >
+                      <MicIcon
+                        style={{ color: "rgb(35, 127, 244)" }}
+                        fontSize="medium"
+                      />
+                    </StyledIconButton>
+            }
+          </ActionContainer>
+        </div>
       </div>
     );
   };
@@ -257,7 +269,7 @@ const ChatDialog = (props) => {
   };
 
 
-  
+
 
   const toggleContent = () => {
     setShowContent(!showContent);
@@ -343,7 +355,7 @@ const ChatDialog = (props) => {
           >
             {/* {isAssistant ? assistantLogo : null} */}
           </div>
- 
+
           <div
             style={{
               color: isAssistant ? "#237ff4" : "grey",
@@ -375,7 +387,7 @@ const ChatDialog = (props) => {
       return (
         <ChatContainer role="ASSISTANT">
           {renderChatBox(
-            renderAssistantChatMessage("hhhgggfff", {  }),
+            renderAssistantChatMessage("hhhgggfff", {}),
             {
               isAssistant: true,
               role: "ASSISTANT",
@@ -387,7 +399,7 @@ const ChatDialog = (props) => {
 
     return (
       <ChatContainer role="ASSISTANT">
-        {renderChatBox(_chatResponseHelper("hellleelelel", {  }), {
+        {renderChatBox(_chatResponseHelper("hellleelelel", {}), {
           isAssistant: true,
           role: "ASSISTANT",
         })}
@@ -416,11 +428,11 @@ const ChatDialog = (props) => {
           display: "flex",
           gap: "1rem",
           padding: "1rem",
-          alignItems:'center'
+          alignItems: 'center'
         }}
       >
         <div style={{ position: "relative" }}>
-          <IconButton color="inherit" onClick={()=>{}} aria-label="close">
+          <IconButton color="inherit" onClick={() => { }} aria-label="close">
             <ArrowBackOutlinedIcon />
           </IconButton>
         </div>
@@ -443,8 +455,8 @@ const ChatDialog = (props) => {
                 </IconButton>
               </div>
             )}
-            </div>
-           {isEditingSettings ? (
+          </div>
+          {isEditingSettings ? (
             <div>
               <form
                 style={{
@@ -455,22 +467,23 @@ const ChatDialog = (props) => {
                 onSubmit={handleSubmitEditing}
               >
                 <div>
-                <InputBase
-                 sx={{ mt: 1,
-                  border: "1px solid gray", 
-                  padding:'10px', 
-                  borderRadius:'10px',
-                  width: windowSize.innerWidth > 780 ? '30vw' : '70vw'
-                }}
-                 placeholder="Add prompt Message here"
-                 multiline
-                 maxRows={4}
-                 value={promptInfo}
-                 inputProps={{ 'aria-label': 'add prompt info' }}
-                 onChange={handlePromptChange}
-                 fullWidth
-                 />
-                <p style={{color:'red',fontSize:12}}>{errorPrompt}</p>
+                  <InputBase
+                    sx={{
+                      mt: 1,
+                      border: "1px solid gray",
+                      padding: '10px',
+                      borderRadius: '10px',
+                      width: windowSize.innerWidth > 780 ? '30vw' : '70vw'
+                    }}
+                    placeholder="Add prompt Message here"
+                    multiline
+                    maxRows={4}
+                    value={promptInfo}
+                    inputProps={{ 'aria-label': 'add prompt info' }}
+                    onChange={handlePromptChange}
+                    fullWidth
+                  />
+                  <p style={{ color: 'red', fontSize: 12 }}>{errorPrompt}</p>
                 </div>
                 <IconButton
                   style={{ padding: "0.5rem" }}
@@ -511,7 +524,7 @@ const ChatDialog = (props) => {
           <h3>Hi, welcome to Recruitment Chat!</h3>
           <p>
             I am an AI Assistant, I am here to take interview to you
-          </p> 
+          </p>
         </div>
       );
     }
@@ -521,7 +534,7 @@ const ChatDialog = (props) => {
 
   useEffect(() => {
     if (true) {
-    //   resetResponse();
+      //   resetResponse();
       inputRef.current?.focus();
     }
   }, []);
@@ -536,7 +549,7 @@ const ChatDialog = (props) => {
       }}
       containerClassName="drawer"
       open={true}
-      onClose={()=>{}}
+      onClose={() => { }}
     >
       {renderChatTitle()}
       <DrawerContainer ref={chatContainerRef}>
@@ -702,7 +715,7 @@ const ChatContainer = styled.div`
   & {
     display: flex;
     background-color: ${(props) =>
-      props.role === "ASSISTANT" ? "#f7f7f8" : "none"};
+    props.role === "ASSISTANT" ? "#f7f7f8" : "none"};
     width: 100%;
     border-bottom: 1px solid #dbdbdb;
     padding: 0.5rem;
