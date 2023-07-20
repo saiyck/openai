@@ -44,6 +44,7 @@ const ChatDialog = (props) => {
   const [messages, setMessages] = useState([]);
   const [loading, setLoading] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
+  const [recordingInProgress, setRecordingInProgress] = useState(false);
   const [isEditingSettings, setIsEditingSettings] = useState(false);
   const [errorPrompt, setErrorPrompt] = useState("");
   const params = useParams();
@@ -159,6 +160,7 @@ const ChatDialog = (props) => {
       Mp3Recorder
         .start()
         .then(() => {
+          setRecordingInProgress(true)
           setIsRecording(true)
         }).catch((e) => console.error(e));
     }
@@ -167,6 +169,7 @@ const ChatDialog = (props) => {
 
   const stop = () => {
     setLoading(true)
+    setRecordingInProgress(false)
     Mp3Recorder
       .stop()
       .getMp3()
@@ -197,7 +200,7 @@ const ChatDialog = (props) => {
 
         <div style={{ position: "relative", display: 'flex', alignItems: 'center' }}>
           {
-            isRecording ?
+            recordingInProgress ?
               <RecordingActionContainer style={{}}>
                 <StyledIconButton
                   type="submit"
@@ -214,7 +217,7 @@ const ChatDialog = (props) => {
             rowsMax={4}
             autoFocus
             ref={inputRef}
-            isRecording={isRecording}
+            isRecording={recordingInProgress}
             placeholder="e.g. Tap to speak or write message"
             value={text}
             disabled={loading || isRecording}
