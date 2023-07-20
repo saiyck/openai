@@ -43,10 +43,11 @@ const ChatDialog = (props) => {
   const [promptInfo, setPromptInfo] = useState("imagine you're a nurse at a hospital. you are responsible to screen the initial symptoms, suggest him the right specialist (gynac, pediatrics, dentist, oncologist, dermatologist, etc). ask one question at a time. based on the user response, ask a follow-up question. at the end summarise your observations");
   const [messages, setMessages] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [isRecording, setIsRecording] = useState(false);
+  const [isRecording, setIsRecording] = useState(true);
   const [recordingInProgress, setRecordingInProgress] = useState(false);
   const [isEditingSettings, setIsEditingSettings] = useState(false);
   const [errorPrompt, setErrorPrompt] = useState("");
+  const [scrollBottom, setBottom] = useState(false);
   const params = useParams();
   const id = params.id;
   const [windowSize, setWindowSize] = useState(getWindowSize());
@@ -58,6 +59,18 @@ const ChatDialog = (props) => {
   //   console.log('error',err)
   //  })
   // },[])
+
+  const messagesEndRef = useRef(null)
+
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
+  }
+
+  useEffect(() => {
+    scrollToBottom()
+    console.log('caalinggg')
+  }, [messages, scrollBottom]);
+
 
   const defaultOptions = {
     loop: true,
@@ -186,6 +199,7 @@ const ChatDialog = (props) => {
             let ms = { role: "assistant", content: res.data.choices[0].message.content }
             temp.push(ms)
             setMessages(temp);
+            setBottom(!scrollBottom);
             setIsRecording(false)
             setLoading(false)
           })
@@ -247,6 +261,7 @@ const ChatDialog = (props) => {
                       type="submit"
                       color="primary"
                       onClick={stop}
+                      className='pulsate'
                     >
                       <StopCircle
                         style={{ color: "rgb(255, 0, 0)" }}
@@ -433,6 +448,8 @@ const ChatDialog = (props) => {
           return renderChatMessage(message, { role, isAssistant, index });
         })}
         {/* {renderChatStreamResponse()} */}
+        {console.log('hello')}
+        <div ref={messagesEndRef} />
       </ChatsContainer>
     );
   };
