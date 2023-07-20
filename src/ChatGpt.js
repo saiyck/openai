@@ -111,7 +111,7 @@ const ChatDialog = (props) => {
   }
 
   const handleSubmitEditing = () => {
-    if (promptInfo.length > 50) {
+    if (promptInfo.length > 30) {
       setIsEditingSettings(false)
       setErrorPrompt("")
     } else {
@@ -196,11 +196,25 @@ const ChatDialog = (props) => {
       <div style={{ padding: "1rem" }}>
 
         <div style={{ position: "relative", display: 'flex', alignItems: 'center' }}>
+          {
+            isRecording ?
+              <RecordingActionContainer style={{}}>
+                <StyledIconButton
+                  type="submit"
+                  color="primary"
+                  disabled={true}
+                >
+                  <Lottie options={defaultOptions} height={22} width={22} />
+                </StyledIconButton>
+              </RecordingActionContainer>
+              : null
+          }
           <ChatInput
             rowsMin={1}
             rowsMax={4}
             autoFocus
             ref={inputRef}
+            isRecording={isRecording}
             placeholder="e.g. Tap to speak or write message"
             value={text}
             disabled={loading || isRecording}
@@ -231,11 +245,10 @@ const ChatDialog = (props) => {
                       color="primary"
                       onClick={stop}
                     >
-                      <Lottie options={defaultOptions} height={22} width={22} />
-                      {/* <StopCircle
+                      <StopCircle
                         style={{ color: "rgb(255, 0, 0)" }}
                         fontSize="medium"
-                      /> */}
+                      />
                     </StyledIconButton> :
                     <StyledIconButton
                       type="submit"
@@ -664,10 +677,19 @@ const ActionContainer = styled.div`
   }
 `;
 
+const RecordingActionContainer = styled.div`
+  && {
+    position: absolute;
+    left: 0;
+    bottom 0.5rem;
+    padding: 0.25rem;
+  }
+`;
+
 const ChatInput = styled(TextareaAutosize)`
   && {
     width: 100%;
-    padding: 1rem 4rem 1rem 1.5rem;
+    padding: ${(props) => props.isRecording ? '1rem 4rem 1rem 3rem' : '1rem 4rem 1rem 1.5rem'};
     font-size: 16px !important;
     border-radius: 12px;
     border: 1px solid lightgray;
