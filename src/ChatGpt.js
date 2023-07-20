@@ -43,7 +43,7 @@ const ChatDialog = (props) => {
   const [promptInfo, setPromptInfo] = useState("imagine you're a nurse at a hospital. you are responsible to screen the initial symptoms, suggest him the right specialist (gynac, pediatrics, dentist, oncologist, dermatologist, etc). ask one question at a time. based on the user response, ask a follow-up question. at the end summarise your observations");
   const [messages, setMessages] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [isRecording, setIsRecording] = useState(true);
+  const [isRecording, setIsRecording] = useState(false);
   const [recordingInProgress, setRecordingInProgress] = useState(false);
   const [isEditingSettings, setIsEditingSettings] = useState(false);
   const [errorPrompt, setErrorPrompt] = useState("");
