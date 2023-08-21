@@ -46,6 +46,8 @@ const ChatDialog = (props) => {
   const [isRecording, setIsRecording] = useState(false);
   const [recordingInProgress, setRecordingInProgress] = useState(false);
   const [isEditingSettings, setIsEditingSettings] = useState(false);
+  const [isApiKeyEdit, setIsApiKeyEdit] = useState(false);
+  const [apiKey, setApiKey] = useState("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");
   const [errorPrompt, setErrorPrompt] = useState("");
   const [scrollBottom, setBottom] = useState(false);
   const params = useParams();
@@ -58,7 +60,9 @@ const ChatDialog = (props) => {
   //  }).catch((err)=>{
   //   console.log('error',err)
   //  })
-  // },[])
+  // },[]);
+
+
 
   const messagesEndRef = useRef(null)
 
@@ -99,8 +103,15 @@ const ChatDialog = (props) => {
   }, []);
 
   useEffect(() => {
-    checkPermissions()
+    checkPermissions();
   }, []);
+
+  useEffect(()=> {
+  const promptInfo = JSON.parse(localStorage.getItem('promptInfo'));
+  const apiKey = JSON.parse(localStorage.getItem('apiKey'));
+  if(promptInfo != null)  setPromptInfo(promptInfo);
+  if(apiKey != null)  setApiKey(apiKey);
+  },[]);
 
   const checkPermissions = () => {
     navigator.getUserMedia({ audio: true },
@@ -124,22 +135,41 @@ const ChatDialog = (props) => {
     setPromptInfo(e.target.value)
   }
 
+  const handlePromptApiChange = (e) => {
+    setApiKey(e.target.value)
+  }
+
   const handleSubmitEditing = () => {
     if (promptInfo.length > 30) {
       setIsEditingSettings(false)
+      localStorage.setItem('promptInfo',JSON.stringify(promptInfo));
       setErrorPrompt("")
     } else {
       setErrorPrompt("Please enter proper prompt info")
     }
   }
 
+  const handleSubmitApiEditing = () => {
+      setIsApiKeyEdit(false);
+      localStorage.setItem('apiKey',JSON.stringify(apiKey));
+  }
+
   const handleOpenEditing = () => {
     setIsEditingSettings(true)
+  }
+
+  const handleOpenApiEditing = () => {
+    setIsApiKeyEdit(true)
   }
 
   const handleDeletePrompt = () => {
     setPromptInfo("");
     setIsEditingSettings(false)
+  }
+
+  const handleDeleteApiPrompt = () => {
+    setApiKey("");
+    setIsApiKeyEdit(true)
   }
 
   const handleSend = () => {
@@ -148,10 +178,11 @@ const ChatDialog = (props) => {
     let temp = [...messages];
     temp.push(m);
     setMessages(temp);
-    handleUploadAnswers(temp, promptInfo, id).then((res) => {
+    handleUploadAnswers(temp, promptInfo, id, apiKey).then((res) => {
       let ms = { role: "assistant", content: res.data.choices[0].message.content }
       temp.push(ms)
       setMessages(temp);
+      setBottom(!scrollBottom);
       setText("")
       setIsRecording(false)
       setLoading(false)
@@ -189,13 +220,13 @@ const ChatDialog = (props) => {
       .then(([buffer, blob]) => {
         const wavefile = new File([blob], 'inhand.wav');
         setLoading(true)
-        handleUpload(wavefile).then((res) => {
+        handleUpload(wavefile, apiKey).then((res) => {
           console.log('ress>>>', res)
           let m = { role: "user", content: res.data.text }
           let temp = [...messages];
           temp.push(m);
           setMessages(temp);
-          handleUploadAnswers(temp, promptInfo, id).then((res) => {
+          handleUploadAnswers(temp, promptInfo, id, apiKey).then((res) => {
             let ms = { role: "assistant", content: res.data.choices[0].message.content }
             temp.push(ms)
             setMessages(temp);
@@ -448,7 +479,6 @@ const ChatDialog = (props) => {
           return renderChatMessage(message, { role, isAssistant, index });
         })}
         {/* {renderChatStreamResponse()} */}
-        {console.log('hello')}
         <div ref={messagesEndRef} />
       </ChatsContainer>
     );
@@ -456,11 +486,14 @@ const ChatDialog = (props) => {
 
   const renderChatTitle = () => {
     return (
+      <div style={{
+        gap: "1rem",
+        padding: "1rem",
+      }}>
+        
       <div
         style={{
           display: "flex",
-          gap: "1rem",
-          padding: "1rem",
           alignItems: 'center'
         }}
       >
@@ -489,64 +522,165 @@ const ChatDialog = (props) => {
               </div>
             )}
           </div>
-          {isEditingSettings ? (
+        </div>
+      </div>
+      <div style={{
+        marginLeft:'3rem',
+        marginTop: '-1rem'
+      }}>
+      {isEditingSettings ? (
+        <div>
+          <form
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: ".25rem",
+            }}
+            onSubmit={handleSubmitEditing}
+          >
             <div>
-              <form
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: ".25rem",
+            <h2 style={{ fontSize: 12, marginTop:10 }}>Prompt Message</h2>
+              <InputBase
+                sx={{
+                  mt: 1,
+                  border: "1px solid gray",
+                  padding: '10px',
+                  borderRadius: '10px',
+                  width: windowSize.innerWidth > 780 ? '30vw' : '70vw'
                 }}
-                onSubmit={handleSubmitEditing}
-              >
-                <div>
-                  <InputBase
-                    sx={{
-                      mt: 1,
-                      border: "1px solid gray",
-                      padding: '10px',
-                      borderRadius: '10px',
-                      width: windowSize.innerWidth > 780 ? '30vw' : '70vw'
-                    }}
-                    placeholder="Add prompt Message here"
-                    multiline
-                    maxRows={4}
-                    value={promptInfo}
-                    inputProps={{ 'aria-label': 'add prompt info' }}
-                    onChange={handlePromptChange}
-                    fullWidth
-                  />
-                  <p style={{ color: 'red', fontSize: 12 }}>{errorPrompt}</p>
-                </div>
-                <IconButton
-                  style={{ padding: "0.5rem" }}
-                  onClick={handleSubmitEditing}
-                >
-                  <CloseOutlinedIcon fontSize="small" />
-                </IconButton>
-              </form>
+                placeholder="Add prompt Message here"
+                multiline
+                maxRows={4}
+                value={promptInfo}
+                inputProps={{ 'aria-label': 'add prompt info' }}
+                onChange={handlePromptChange}
+                fullWidth
+              />
+              <p style={{ color: 'red', fontSize: 12 }}>{errorPrompt}</p>
             </div>
-          ) : promptInfo ? (
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: ".25rem",
-              }}
+            <IconButton
+              style={{ padding: "0.5rem" }}
+              onClick={handleSubmitEditing}
             >
-              <div>{promptInfo.substring(0, 50) + "********"}</div>
+              <CloseOutlinedIcon fontSize="small" />
+            </IconButton>
+          </form>
+        </div>
+      ) : promptInfo ? (
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: ".25rem",
+          }}
+        >
+          <div>{promptInfo.substring(0, 50) + "********"}</div>
+          <div>
+            <IconButton
+              style={{ padding: "0.5rem" }}
+              onClick={handleDeletePrompt}
+            >
+              <DeleteOutlineIcon fontSize="small" />
+            </IconButton>
+          </div>
+        </div>
+      ) : null}
+    </div>
+
+    <div
+        style={{
+          display: "flex",
+          alignItems: 'center'
+        }}
+      >
+        <div style={{
+            marginLeft:'3rem',
+        }}>
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: ".25rem",
+            }}
+          >
+            <h2 style={{ fontSize: 16, margin: 0 }}>API Key</h2>
+            {isApiKeyEdit ? null : (
               <div>
                 <IconButton
                   style={{ padding: "0.5rem" }}
-                  onClick={handleDeletePrompt}
+                  onClick={handleOpenApiEditing}
                 >
-                  <DeleteOutlineIcon fontSize="small" />
+                  <CreateOutlinedIcon fontSize="small" />
                 </IconButton>
               </div>
-            </div>
-          ) : null}
+            )}
+          </div>
         </div>
       </div>
+      <div style={{
+        marginLeft:'3rem',
+        marginTop: '-0.5rem'
+      }}>
+      {isApiKeyEdit ? (
+        <div>
+          <form
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: ".25rem",
+            }}
+            onSubmit={handleSubmitApiEditing}
+          >
+            <div>
+            <h2 style={{ fontSize: 12, marginTop:10 }}>Edit your api key</h2>
+              <InputBase
+                sx={{
+                  mt: 1,
+                  border: "1px solid gray",
+                  padding: '10px',
+                  borderRadius: '10px',
+                  width: windowSize.innerWidth > 780 ? '30vw' : '70vw'
+                }}
+                placeholder="Add prompt Message here"
+                multiline
+                maxRows={4}
+                value={apiKey}
+                inputProps={{ 'aria-label': 'add prompt info' }}
+                onChange={handlePromptApiChange}
+                fullWidth
+              />
+              <p style={{ color: 'red', fontSize: 12 }}>{errorPrompt}</p>
+            </div>
+            <IconButton
+              style={{ padding: "0.5rem" }}
+              onClick={handleSubmitApiEditing}
+            >
+              <CloseOutlinedIcon fontSize="small" />
+            </IconButton>
+          </form>
+        </div>
+      ) : apiKey ? (
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: ".25rem",
+          }}
+        >
+          <div>{apiKey.substring(0, 10) + "********"}</div>
+          <div>
+            <IconButton
+              style={{ padding: "0.5rem" }}
+              onClick={handleDeletePrompt}
+            >
+              <DeleteOutlineIcon fontSize="small" />
+            </IconButton>
+          </div>
+        </div>
+      ) : null}
+    </div>
+
+     </div>
     );
   };
 

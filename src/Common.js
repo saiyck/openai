@@ -1,7 +1,7 @@
 import axios from "axios";
 const {REACT_APP_API_URL,REACT_APP_WHISPER_API_KEY} = process.env;
 
-export const handleUpload = (newfiles) => {
+export const handleUpload = (newfiles,apiKey) => {
     let formData = new FormData();
     formData.append("file", newfiles);
     formData.append("model", "whisper-1");
@@ -10,7 +10,7 @@ export const handleUpload = (newfiles) => {
             url:`https://api.openai.com/v1/audio/transcriptions`,
             method:'POST',
             headers:{
-                Authorization: `Bearer ${REACT_APP_WHISPER_API_KEY}`
+                Authorization: `Bearer ${apiKey}`
             },
             data: formData
         }).then((res)=> {
@@ -37,13 +37,13 @@ export const retrivePromptMessage = (id) => {
    })
 }
 
-export const checkTheStatus = (prompt) => {
+export const checkTheStatus = (prompt,apiKey) => {
  return new Promise((resolve,reject)=> {
     axios({
         url:`https://api.openai.com/v1/chat/completions`,
         method:'POST',
         headers:{
-            Authorization: `Bearer ${REACT_APP_WHISPER_API_KEY}`
+            Authorization: `Bearer ${apiKey}`
         },
        data:{
         model: "gpt-3.5-turbo-0613",
@@ -75,14 +75,14 @@ export const checkTheStatus = (prompt) => {
 }
 
 
-export const handleUploadAnswers = (messages,promptInfo,id) => {
+export const handleUploadAnswers = (messages,promptInfo,id,apiKey) => {
       console.log('messages',messages);
     return new Promise((resolve,reject)=> {
         axios({
             url:`https://api.openai.com/v1/chat/completions`,
             method:'POST',
             headers:{
-                Authorization: `Bearer ${REACT_APP_WHISPER_API_KEY}`
+                Authorization: `Bearer ${apiKey}`
             },
             data: {
                 model: "gpt-3.5-turbo-16k",
